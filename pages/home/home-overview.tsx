@@ -1,17 +1,70 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import { useEffect, useState } from "react";
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
+import LoanDTO from "../../dtos/loan-dto";
+import LoanService from "../../services/loan-service";
 import stateService from "../../services/state-service";
 
 export default function HomePage() {
   const username: string = stateService.auth?.username || "";
+  const currentUserId = stateService.auth?.id || "";
+
+  const [owedToUserTotal, setOwedToUserTotal] = useState<number>(0);
+  const [userOwesTotal, setUserOwesTotal] = useState<number>(0);
+  const [givenLoansCount, setGivenLoansCount] = useState<number>(0);
+  const [borrowedLoansCount, setBorrowedLoansCount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (currentUserId) {
+      loadDashboardData();
+    }
+  }, [currentUserId]);
+
+  const loadDashboardData = async () => {
+    if (!currentUserId) return;
+    setIsLoading(true);
+
+    try {
+      const [givenRes, borrowedRes] = await Promise.all([
+        LoanService.GetAllByUserIdAsync(currentUserId),
+        LoanService.GetAllByBenUserIdAsync(currentUserId),
+      ]);
+
+      if (givenRes.statusCode === 200 && Array.isArray(givenRes.data)) {
+        const loansGiven: LoanDTO[] = givenRes.data;
+        const totalGiven = loansGiven.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+        setOwedToUserTotal(totalGiven);
+        setGivenLoansCount(loansGiven.length);
+      } else {
+        setOwedToUserTotal(0);
+        setGivenLoansCount(0);
+      }
+
+      if (borrowedRes.statusCode === 200 && Array.isArray(borrowedRes.data)) {
+        const loansBorrowed: LoanDTO[] = borrowedRes.data;
+        const totalBorrowed = loansBorrowed.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+        setUserOwesTotal(totalBorrowed);
+        setBorrowedLoansCount(loansBorrowed.length);
+      } else {
+        setUserOwesTotal(0);
+        setBorrowedLoansCount(0);
+      }
+    } catch (err) {
+      console.error("Dashboard load error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -19,17 +72,22 @@ export default function HomePage() {
       <View style={styles.header}>
         <View style={styles.headerIcons}>
           <View style={styles.iconContainer}>
-            <Ionicons name="flame" size={24} color="orange" />
-            <Text style={styles.iconText}>5 </Text>
+            <Ionicons name="flame" size={24} color="#EF4924" />
+            <Text style={styles.iconText}>{givenLoansCount} Given</Text>
           </View>
           <View style={styles.iconContainer}>
-            <Ionicons name="rocket" size={24} color="#05BFDB" />
-            <Text style={styles.iconText}>1100 </Text>
+            <Ionicons name="wallet" size={24} color="#F6A537" />
+            <Text style={styles.iconText}>{borrowedLoansCount} Owed</Text>
           </View>
         </View>
       </View>
 
-      <ScrollView style={styles.scrollContainer}>
+      <ScrollView
+        style={styles.scrollContainer}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={loadDashboardData} tintColor="#00FFCA" />
+        }
+      >
         <View style={styles.content}>
           <TouchableOpacity style={styles.card}>
             <Text style={styles.cardTitle}>Hello, {username}</Text>
@@ -38,13 +96,29 @@ export default function HomePage() {
             </Text>
           </TouchableOpacity>
 
-          <View style={styles.card}>{/* <PaceCalculator /> */}</View>
-
-          {/* Apply for a loan button */}
           <TouchableOpacity style={styles.card}>
-            <TouchableOpacity style={styles.button} onPress={() => {}}>
-              <Text style={styles.buttonText}>Apply</Text>
-            </TouchableOpacity>
+            <Text style={styles.cardTitle}>Total amount owed to you</Text>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#088395" />
+            ) : (
+              <Text style={styles.cardHighlightText}>R {owedToUserTotal}</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.card}>
+            <Text style={styles.cardTitle}>Total amount you owe to others</Text>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#088395" />
+            ) : (
+              <Text style={styles.cardHighlightText}>R {userOwesTotal}</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.card}>
+            <Text style={styles.cardTitle}>Active Loans Summary</Text>
+            <Text style={styles.cardText}>
+              Given: {givenLoansCount} loan(s) | Borrowed: {borrowedLoansCount} loan(s)
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -121,6 +195,12 @@ const styles = StyleSheet.create({
   cardText: {
     fontSize: 14,
     color: "#666",
+  },
+  cardHighlightText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#088395",
+    marginTop: 5,
   },
   headerIcons: {
     flexDirection: "row",

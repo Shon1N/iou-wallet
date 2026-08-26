@@ -3,7 +3,7 @@ import EnvelopeDTO from "../dtos/envelope-dto";
 import LoginDTO from "../dtos/login-dto";
 import api from "./api-service";
 
-const WeatherService = {
+const AuthService = {
   async LoginAsync(loginDTO: LoginDTO): Promise<EnvelopeDTO> {
     const envelope: EnvelopeDTO = {
       data: null,
@@ -13,6 +13,8 @@ const WeatherService = {
     };
 
     try {
+      console.log("api baseURL:", api.defaults.baseURL);
+      console.log("api request data :", loginDTO);
       const response: any = await api.post("/auth/LoginAsync", loginDTO);
       envelope.data = response.data.data as AuthDTO;
       envelope.result = response.data.result;
@@ -22,10 +24,9 @@ const WeatherService = {
       envelope.result = "Network error.";
       envelope.statusCode = 500;
       console.error("LoginAsync error:", err);
-    } finally {
-      return envelope;
     }
+    return envelope;
   },
 };
 
-export default WeatherService;
+export default AuthService;

@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import BottomNavigation from "./components/navigation/bottom-navigation";
 import LoginScreen from "./pages/auth/login";
-import FriendOverview from "./pages/friends/friend-overview";
+import BeneficiaryOverview from "./pages/beneficiaries/beneficiary-overview";
 import HomePage from "./pages/home/home-overview";
-import LeagueOverview from "./pages/league/league-overview";
+import LoanOverview from "./pages/loans/loan-overview";
 import ProfilePage from "./pages/profile/profile-overview";
 import stateService from "./services/state-service";
 
@@ -55,9 +55,9 @@ export default function App() {
       case "home":
         return <HomePage />;
       case "league":
-        return <LeagueOverview />;
+        return <LoanOverview />;
       case "friend":
-        return <FriendOverview />;
+        return <BeneficiaryOverview />;
       case "profile":
         return <ProfilePage />;
       default:

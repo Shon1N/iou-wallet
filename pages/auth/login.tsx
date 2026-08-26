@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 import {
   Alert,
   StyleSheet,
@@ -19,6 +20,11 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordSecure, setIsPasswordSecure] = useState(true);
+
+  const togglePasswordVisibility = () => {
+    setIsPasswordSecure(!isPasswordSecure);
+  };
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -64,13 +70,27 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
         keyboardType="default"
         autoCapitalize="none"
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password*"
-        value={loginData.password}
-        onChangeText={(value) => handleInputChange("password", value)}
-        secureTextEntry
-      />
+
+      <View style={styles.passwordInputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Password*"
+          value={loginData.password}
+          onChangeText={(value) => handleInputChange("password", value)}
+          secureTextEntry={isPasswordSecure}
+        />
+        <TouchableOpacity
+          onPress={togglePasswordVisibility}
+          style={styles.toggleButton}
+        >
+          {isPasswordSecure ? (
+            <Ionicons name="eye" size={24} color="#000" />
+          ) : (
+            <Ionicons name="eye-off" size={24} color="#000" />
+          )}
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity
         style={styles.button}
         onPress={handleLogin}
@@ -101,6 +121,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 50,
+    width: "100%",
     borderColor: "#ccc",
     borderWidth: 1,
     borderRadius: 5,
@@ -118,5 +139,15 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  passwordInputContainer: {
+    flexDirection: "row",
+  },
+  toggleButton: {
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    top: 12,
+    right: 10,
   },
 });

@@ -1,13 +1,19 @@
 import axios from "axios";
-//import stateService from './state-service';
+import appConfig from "../config/app-config";
+import stateService from "./state-service";
 
 const api = axios.create({
-  baseURL: "https://kt2lp7qk-5277.euw.devtunnels.ms/api",
-  //baseURL: 'https://gamestreet-api.azurewebsites.net/api',
+  baseURL: appConfig.baseURL,
   headers: {
-    //'Authorization': `Bearer ${stateService.auth?.Token}`,
     "Content-Type": "application/json",
   },
+});
+
+api.interceptors.request.use((config) => {
+  if (stateService.auth?.token) {
+    config.headers.Authorization = `Bearer ${stateService.auth.token}`;
+  }
+  return config;
 });
 
 export default api;
